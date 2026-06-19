@@ -13,41 +13,32 @@ type state struct {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "not enough arguments provided")
-    	os.Exit(1)
-	}
-
-	 cmd := command{
-    name: os.Args[1],
-    args: os.Args[2:],
-	}
 	cfg, err := config.Read()
 	if err != nil {
 		log.Fatalf("error reading config: %v", err)
 	}
-	fmt.Printf("Read config: %+v\n", cfg)
-	cmds := commands{
-		commands: map[string]func(*state, command) error{},
-	}
+
 	s := state{cfg: &cfg}
-	
+
+	cmds := commands{
+		commands: make(map[string]func(*state, command) error),
+	}
+
+
 	cmds.register("login", handlerLogin)
 
-	err = cmds.run(&s, cmd)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if len(os.Args) < 2 {
+		log.Fatal("Usage: cli <command> [args...]")
     	os.Exit(1)
 	}
 
-	// err = s.cfg.SetUser("")
-	// if err != nil {
-	// 	log.Fatalf("couldn't set current user: %v", err)
-	// }
-
-	cfg, err = config.Read()
-	if err != nil {
-		log.Fatalf("error reading config: %v", err)
+	cmd := command{
+    name: os.Args[1],
+    args: os.Args[2:],
 	}
-	fmt.Printf("Read config again: %+v\n", cfg)
+
+	err = cmds.run(&s, cmd)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
